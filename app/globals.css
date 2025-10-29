@@ -146,3 +146,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Responsive improvements */
+@media (max-width: 640px) {
+  /* Make sections using h-screen adapt to mobile browser UI */
+  :where(.h-screen) {
+    min-height: 100dvh;
+    height: auto;
+  }
+  /* Ensure smoother scroll inside overflow containers on iOS */
+  :where(.overflow-auto) {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Prefer dynamic viewport height where supported */
+@supports (height: 100dvh) {
+  :where(.min-h-screen) { min-height: 100dvh; }
+  :where(.h-screen) { min-height: 100dvh; }
+}
