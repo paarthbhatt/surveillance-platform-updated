@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Menu } from "lucide-react"
 import {
   LayoutDashboard,
   Map,
@@ -20,7 +22,7 @@ import {
   Radar,
 } from "lucide-react"
 
-const navigation = [
+export const NAV_ITEMS = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
   { name: "Live Dashboard", href: "/dashboard", icon: Activity },
   { name: "Object Detection", href: "/yolo", icon: Shield },
@@ -40,7 +42,7 @@ export function Navigation() {
   return (
     <div
       className={cn(
-        "flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        "hidden md:flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
         isCollapsed ? "w-16" : "w-64",
       )}
     >
@@ -62,7 +64,7 @@ export function Navigation() {
 
       {/* Navigation */}
       <nav className="flex-1 p-2 space-y-1">
-        {navigation.map((item) => {
+        {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href
           return (
             <Link
@@ -102,5 +104,52 @@ export function Navigation() {
         </div>
       </div>
     </div>
+  )
+}
+
+export function MobileNav() {
+  const pathname = usePathname()
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="sm" className="md:hidden">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 w-72">
+        <SheetHeader className="p-4 border-b">
+          <SheetTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            SurveillanceOps
+          </SheetTitle>
+        </SheetHeader>
+        <nav className="p-2 space-y-1">
+          {NAV_ITEMS.map((item) => {
+            const isActive = pathname === item.href
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                )}
+              >
+                <item.icon className="h-4 w-4 flex-shrink-0" />
+                <span>{item.name}</span>
+                {item.name === "Alerts" && (
+                  <Badge variant="destructive" className="ml-auto">
+                    3
+                  </Badge>
+                )}
+              </Link>
+            )}
+          )}
+        </nav>
+      </SheetContent>
+    </Sheet>
   )
 }

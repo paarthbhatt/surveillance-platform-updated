@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { MobileNav } from "@/components/navigation"
 import { Badge } from "@/components/ui/badge"
 import {
   Bell,
@@ -37,7 +38,9 @@ export function Header() {
 
   return (
     <header className="flex items-center justify-between p-4 bg-card border-b border-border">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Mobile navigation trigger */}
+        <MobileNav />
         <h1 className="text-2xl font-semibold text-foreground">Surveillance Monitoring</h1>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-success border-success">
