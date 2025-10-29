@@ -88,6 +88,62 @@ export default function AnalyticsPage() {
     to: addDays(new Date(), 30),
   })
 
+  const downloadFile = (filename: string, content: string, type = "text/plain") => {
+    const blob = new Blob([content], { type })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportCSV = () => {
+    const rows: string[] = []
+    rows.push("Section,Key,Value")
+    energyTrends.forEach((d) => rows.push(`Energy Trends,${d.date},solar:${d.solar.toFixed(2)}|battery:${d.battery.toFixed(2)}|consumption:${d.consumption.toFixed(2)}`))
+    motionPatterns.forEach((d) => rows.push(`Motion Patterns,${d.hour},weekday:${d.weekday}|weekend:${d.weekend}|alerts:${d.alerts}`))
+    temperatureHistory.slice(-48).forEach((d) => rows.push(`Env,${d.time},temperature:${d.temperature.toFixed(2)}|humidity:${d.humidity.toFixed(2)}`))
+    deviceUptime.forEach((d) => rows.push(`Uptime,${d.name},uptime:${d.uptime}|downtime:${d.downtime}`))
+    alertDistribution.forEach((d) => rows.push(`Alerts,${d.name},value:${d.value}`))
+    downloadFile("analytics-export.csv", rows.join("\n"), "text/csv;charset=utf-8")
+  }
+
+  const generateReport = () => {
+    const report = {
+      generatedAt: new Date().toISOString(),
+      timeRange,
+      dateRange,
+      summaries: {
+        avgSolar: Number(
+          (
+            energyTrends.reduce((s, d) => s + d.solar, 0) / energyTrends.length
+          ).toFixed(2),
+        ),
+        totalMotionWeekday: motionPatterns.reduce((s, d) => s + d.weekday, 0),
+        totalMotionWeekend: motionPatterns.reduce((s, d) => s + d.weekend, 0),
+        avgTemp: Number(
+          (
+            temperatureHistory.slice(-48).reduce((s, d) => s + d.temperature, 0) / 48
+          ).toFixed(2),
+        ),
+        uptimeLeaders: deviceUptime
+          .slice()
+          .sort((a, b) => b.uptime - a.uptime)
+          .slice(0, 2),
+      },
+    }
+    downloadFile("analytics-report.json", JSON.stringify(report, null, 2), "application/json")
+  }
+
+  const scheduleReport = () => {
+    // Demo: generate a report after 3 seconds
+    setTimeout(() => generateReport(), 3000)
+    alert("Report scheduled. A report will be generated in 3 seconds (demo)")
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <Navigation />
@@ -117,7 +173,7 @@ export default function AnalyticsPage() {
                     <SelectItem value="1y">1 Year</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button variant="outline" className="gap-2 bg-transparent">
+                <Button variant="outline" className="gap-2 bg-transparent" onClick={exportCSV}>
                   <Download className="h-4 w-4" />
                   Export
                 </Button>
@@ -482,15 +538,15 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                  <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent" onClick={exportCSV}>
                     <Download className="h-6 w-6" />
                     <span className="text-sm">Export CSV</span>
                   </Button>
-                  <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                  <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent" onClick={generateReport}>
                     <BarChart3 className="h-6 w-6" />
                     <span className="text-sm">Generate Report</span>
                   </Button>
-                  <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+                  <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent" onClick={scheduleReport}>
                     <Calendar className="h-6 w-6" />
                     <span className="text-sm">Schedule Report</span>
                   </Button>

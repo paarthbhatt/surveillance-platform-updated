@@ -1,11 +1,14 @@
+"use client"
 import { Navigation } from "@/components/navigation"
 import { Header } from "@/components/header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Activity, Camera, Eye, Zap, MapPin, TrendingUp, AlertTriangle, CheckCircle, XCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function HomePage() {
+  const router = useRouter()
   return (
     <div className="flex h-screen bg-background">
       <Navigation />
@@ -127,7 +130,7 @@ export default function HomePage() {
                       </Badge>
                     </div>
                   </div>
-                  <Button className="w-full mt-4 bg-transparent" variant="outline">
+                  <Button className="w-full mt-4 bg-transparent" variant="outline" onClick={() => router.push("/map")}>
                     View Interactive Map
                   </Button>
                 </CardContent>
@@ -172,7 +175,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                  <Button className="w-full mt-4 bg-transparent" variant="outline">
+                  <Button className="w-full mt-4 bg-transparent" variant="outline" onClick={() => router.push("/analytics")}>
                     View All Activity
                   </Button>
                 </CardContent>
@@ -187,19 +190,19 @@ export default function HomePage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline">
+                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline" onClick={() => router.push("/dashboard")}>
                     <Activity className="h-6 w-6" />
                     <span className="text-sm">Live Dashboard</span>
                   </Button>
-                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline">
+                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline" onClick={() => router.push("/map")}>
                     <MapPin className="h-6 w-6" />
                     <span className="text-sm">View Map</span>
                   </Button>
-                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline">
+                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline" onClick={() => router.push("/cameras")}>
                     <Camera className="h-6 w-6" />
                     <span className="text-sm">Camera Feeds</span>
                   </Button>
-                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline">
+                  <Button className="h-20 flex-col gap-2 bg-transparent" variant="outline" onClick={() => router.push("/analytics")}>
                     <TrendingUp className="h-6 w-6" />
                     <span className="text-sm">Analytics</span>
                   </Button>

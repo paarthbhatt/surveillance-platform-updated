@@ -22,6 +22,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 const cameras = [
   {
@@ -110,6 +111,7 @@ export default function CamerasPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [activeCamera, setActiveCamera] = useState<typeof cameras[0] | null>(null)
 
   const filteredCameras = cameras.filter((camera) => {
     const matchesSearch =
@@ -285,31 +287,44 @@ export default function CamerasPage() {
                           <span>{camera.fps} FPS</span>
                         </div>
                         <div className="flex items-center gap-1 pt-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1 bg-transparent"
-                            onClick={() => {
-                              alert(`Opening live view for ${camera.name}`)
-                            }}
-                          >
-                            <Play className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              alert(`Opening settings for ${camera.name}`)
-                            }}
-                          >
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 bg-transparent"
+                                onClick={() => setActiveCamera(camera)}
+                              >
+                                <Play className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl">
+                              <DialogHeader>
+                                <DialogTitle>{activeCamera?.name} – Live View</DialogTitle>
+                              </DialogHeader>
+                              <div className="aspect-video bg-black rounded overflow-hidden">
+                                <img src={activeCamera?.imageUrl || "/placeholder.svg"} alt="Live" className="w-full h-full object-cover" />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          <Button size="sm" variant="outline" onClick={() => setActiveCamera(camera)}>
                             <Settings className="h-3 w-3" />
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => {
-                              alert(`Downloading recordings from ${camera.name}`)
+                              const csv = `id,name,location\\n${camera.id},${camera.name},${camera.location}`
+                              const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
+                              const url = URL.createObjectURL(blob)
+                              const a = document.createElement("a")
+                              a.href = url
+                              a.download = `${camera.id}-recordings.csv`
+                              document.body.appendChild(a)
+                              a.click()
+                              a.remove()
+                              URL.revokeObjectURL(url)
                             }}
                           >
                             <Download className="h-3 w-3" />
@@ -357,31 +372,48 @@ export default function CamerasPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => alert(`Opening live view for ${camera.name}`)}
-                            >
-                              <Play className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => alert(`Opening settings for ${camera.name}`)}
-                            >
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" onClick={() => setActiveCamera(camera)}>
+                                  <Play className="h-3 w-3" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-3xl">
+                                <DialogHeader>
+                                  <DialogTitle>{activeCamera?.name} – Live View</DialogTitle>
+                                </DialogHeader>
+                                <div className="aspect-video bg-black rounded overflow-hidden">
+                                  <img src={activeCamera?.imageUrl || "/placeholder.svg"} alt="Live" className="w-full h-full object-cover" />
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Button size="sm" variant="outline" onClick={() => setActiveCamera(camera)}>
                               <Settings className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => alert(`Downloading recordings from ${camera.name}`)}
+                              onClick={() => {
+                                const csv = `id,name,location\\n${camera.id},${camera.name},${camera.location}`
+                                const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
+                                const url = URL.createObjectURL(blob)
+                                const a = document.createElement("a")
+                                a.href = url
+                                a.download = `${camera.id}-recordings.csv`
+                                document.body.appendChild(a)
+                                a.click()
+                                a.remove()
+                                URL.revokeObjectURL(url)
+                              }}
                             >
                               <Download className="h-3 w-3" />
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => alert(`Opening fullscreen view for ${camera.name}`)}
+                              onClick={() => {
+                                window.open(camera.imageUrl || "/placeholder.svg", "_blank")
+                              }}
                             >
                               <Maximize className="h-3 w-3" />
                             </Button>

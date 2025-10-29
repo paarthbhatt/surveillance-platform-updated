@@ -16,6 +16,7 @@ interface Detection {
 
 export function YOLODetector() {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const fileVideoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -27,6 +28,8 @@ export function YOLODetector() {
   const [modelLoaded, setModelLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [statusText, setStatusText] = useState("Model idle")
+  const [rawOutput, setRawOutput] = useState<string>("")
 
   const animationFrameRef = useRef<number>()
   const fpsCounterRef = useRef({ frames: 0, lastTime: Date.now() })
@@ -58,6 +61,7 @@ export function YOLODetector() {
         console.log("✅ YOLO model loaded successfully with backend:", tf.getBackend())
         // Tune target interval based on backend
         targetIntervalMsRef.current = tf.getBackend() === "cpu" ? 200 : 66 // ~5 FPS CPU, ~15 FPS WebGL
+        setStatusText("Model loaded")
       } catch (err) {
         console.error("[YOLO] Model loading error:", err)
         setError(
@@ -137,18 +141,23 @@ export function YOLODetector() {
         clearInterval(detectIntervalRef.current)
         detectIntervalRef.current = null
       }
+      setStatusText("Stopped")
     }
   }
 
   // Draw loop: smooth canvas rendering with last detections
   const startDrawLoop = () => {
     const draw = () => {
-      if (!isRunning || !videoRef.current || !canvasRef.current) return
+      // Always schedule next frame to keep FPS moving
+      animationFrameRef.current = requestAnimationFrame(draw)
+
+      if (!isRunning || !canvasRef.current) return
 
       const ctx = canvasRef.current.getContext("2d")
-      if (ctx && videoRef.current && canvasRef.current) {
+      const currentVideo = fileVideoRef.current && !fileVideoRef.current.paused ? fileVideoRef.current : videoRef.current
+      if (ctx && currentVideo && canvasRef.current) {
         // Draw video frame
-        ctx.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
+        ctx.drawImage(currentVideo, 0, 0, canvasRef.current.width, canvasRef.current.height)
         // Overlay last known detections
         if (lastDetectionsRef.current.length > 0) {
           drawDetectionsOnCanvas(canvasRef.current, lastDetectionsRef.current, ctx)
@@ -163,8 +172,6 @@ export function YOLODetector() {
         renderFpsRef.current.frames = 0
         renderFpsRef.current.last = now
       }
-
-      animationFrameRef.current = requestAnimationFrame(draw)
     }
 
     animationFrameRef.current = requestAnimationFrame(draw)
@@ -175,8 +182,11 @@ export function YOLODetector() {
     if (detectIntervalRef.current) clearInterval(detectIntervalRef.current)
     detectIntervalRef.current = setInterval(async () => {
       try {
-        if (!isRunning || !model || !canvasRef.current) return
-        const predictions = await model.detect(canvasRef.current as HTMLCanvasElement, 6)
+        if (!isRunning || !model) return
+        setStatusText("Detecting...")
+        const inputEl = (fileVideoRef.current && !fileVideoRef.current.paused ? fileVideoRef.current : videoRef.current) ?? canvasRef.current
+        if (!inputEl) return
+        const predictions = await model.detect(inputEl as HTMLVideoElement, 10)
         const detected: Detection[] = predictions.map((pred: any) => {
           const [x, y, width, height] = pred.bbox
           return {
@@ -188,10 +198,53 @@ export function YOLODetector() {
         })
         lastDetectionsRef.current = detected
         setDetections(detected)
+        setRawOutput(JSON.stringify(
+          detected.map(d => ({ class: d.class, score: Number((d.score*100).toFixed(1)), bbox: d.bbox })),
+          null,
+          2,
+        ))
+        setStatusText(`Detections: ${detected.length}`)
       } catch (err) {
         console.error("[YOLO] Detection error:", err)
+        setStatusText("Detection error")
       }
     }, targetIntervalMsRef.current)
+  }
+
+  // Manual snapshot: capture current video frame to canvas and run detect once
+  const captureAndDetect = async () => {
+    try {
+      if (!model || !canvasRef.current) return
+      const ctx = canvasRef.current.getContext("2d")
+      const src = (fileVideoRef.current && !fileVideoRef.current.paused ? fileVideoRef.current : videoRef.current)
+      if (!ctx || !src) return
+      canvasRef.current.width = src.videoWidth || canvasRef.current.width
+      canvasRef.current.height = src.videoHeight || canvasRef.current.height
+      ctx.drawImage(src, 0, 0, canvasRef.current.width, canvasRef.current.height)
+      setStatusText("Detecting (snapshot)...")
+      const predictions = await model.detect(canvasRef.current, 10)
+      const detected: Detection[] = predictions.map((pred: any) => {
+        const [x, y, width, height] = pred.bbox
+        return {
+          class: pred.class,
+          score: pred.score,
+          bbox: [x, y, width, height],
+          centroid: [x + width / 2, y + height / 2],
+        }
+      })
+      lastDetectionsRef.current = detected
+      setDetections(detected)
+      drawDetectionsOnCanvas(canvasRef.current, detected, ctx)
+      setRawOutput(JSON.stringify(
+        detected.map(d => ({ class: d.class, score: Number((d.score*100).toFixed(1)), bbox: d.bbox })),
+        null,
+        2,
+      ))
+      setStatusText(`Snapshot detections: ${detected.length}`)
+    } catch (e) {
+      console.error("[YOLO] Snapshot detect error:", e)
+      setStatusText("Snapshot detection error")
+    }
   }
 
   // Draw detections on canvas
@@ -240,52 +293,91 @@ export function YOLODetector() {
 
     try {
       setError(null)
-      const reader = new FileReader()
-
-      reader.onload = async (event) => {
-        const img = new Image()
-        img.onload = async () => {
-          try {
-            const predictions = await model.detect(img, 6)
-
-            const detected: Detection[] = predictions.map((pred: any) => {
-              const [x, y, width, height] = pred.bbox
-              return {
-                class: pred.class,
-                score: pred.score,
-                bbox: [x, y, width, height],
-                centroid: [x + width / 2, y + height / 2],
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader()
+        reader.onload = async (event) => {
+          const img = new Image()
+          img.onload = async () => {
+            try {
+              if (canvasRef.current) {
+                const ctx = canvasRef.current.getContext("2d")
+                if (ctx) {
+                  canvasRef.current.width = img.width
+                  canvasRef.current.height = img.height
+                  ctx.drawImage(img, 0, 0)
+                }
               }
-            })
-
-            setDetections(detected)
-
-            // Draw on canvas
-            if (canvasRef.current) {
-              const ctx = canvasRef.current.getContext("2d")
-              if (ctx) {
-                canvasRef.current.width = img.width
-                canvasRef.current.height = img.height
-                ctx.drawImage(img, 0, 0)
-                drawDetectionsOnCanvas(canvasRef.current, detected)
-              }
+              const predictions = await model.detect(img, 10)
+              const detected: Detection[] = predictions.map((pred: any) => {
+                const [x, y, width, height] = pred.bbox
+                return {
+                  class: pred.class,
+                  score: pred.score,
+                  bbox: [x, y, width, height],
+                  centroid: [x + width / 2, y + height / 2],
+                }
+              })
+              setDetections(detected)
+              if (canvasRef.current) drawDetectionsOnCanvas(canvasRef.current, detected)
+              setStatusText(`Image detections: ${detected.length}`)
+            } catch (err) {
+              console.error("[YOLO] Detection error:", err)
+              setError("Failed to detect objects in image")
             }
-          } catch (err) {
-            console.error("[YOLO] Detection error:", err)
-            setError("Failed to detect objects in image")
+          }
+          if (event.target?.result) {
+            img.src = event.target.result as string
           }
         }
-
-        if (event.target?.result) {
-          img.src = event.target.result as string
+        reader.readAsDataURL(file)
+      } else if (file.type.startsWith("video/")) {
+        const url = URL.createObjectURL(file)
+        if (fileVideoRef.current) {
+          fileVideoRef.current.src = url
+          await fileVideoRef.current.play().catch(() => {})
+          if (canvasRef.current && fileVideoRef.current) {
+            canvasRef.current.width = fileVideoRef.current.videoWidth || 640
+            canvasRef.current.height = fileVideoRef.current.videoHeight || 480
+          }
+          setIsRunning(true)
+          setStatusText("Playing uploaded video")
+          startDrawLoop()
+          startDetectLoop()
         }
       }
-
-      reader.readAsDataURL(file)
     } catch (err) {
       setError("Failed to process image")
       console.error(err)
     }
+  }
+
+  const loadSample = async () => {
+    if (!model) return
+    const img = new Image()
+    img.onload = async () => {
+      if (canvasRef.current) {
+        const ctx = canvasRef.current.getContext("2d")
+        if (ctx) {
+          canvasRef.current.width = img.width
+          canvasRef.current.height = img.height
+          ctx.drawImage(img, 0, 0)
+        }
+      }
+      const predictions = await model.detect(img, 10)
+      const detected: Detection[] = predictions.map((pred: any) => {
+        const [x, y, width, height] = pred.bbox
+        return {
+          class: pred.class,
+          score: pred.score,
+          bbox: [x, y, width, height],
+          centroid: [x + width / 2, y + height / 2],
+        }
+      })
+      setDetections(detected)
+      if (canvasRef.current) drawDetectionsOnCanvas(canvasRef.current, detected)
+      setStatusText(`Sample detections: ${detected.length}`)
+    }
+    img.src = "/placeholder.jpg"
   }
 
   return (
@@ -321,12 +413,16 @@ export function YOLODetector() {
               playsInline
               muted
             />
-            <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none" width={640} height={480} />
+            <video ref={fileVideoRef} className="hidden" playsInline muted />
+            <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none z-10" width={640} height={480} />
             {isRunning && (
               <div className="absolute top-2 right-2 rounded bg-red-500 px-2 py-1 text-xs font-bold text-white z-10">
                 LIVE - {fps} FPS
               </div>
             )}
+            <div className="absolute top-2 left-2 rounded bg-black/60 px-2 py-1 text-xs font-medium text-white z-10">
+              {statusText}
+            </div>
           </div>
 
           <div className="mt-4 flex gap-2">
@@ -358,6 +454,12 @@ export function YOLODetector() {
             >
               <Upload className="mr-2 h-4 w-4" />
               Upload CCTV
+            </Button>
+            <Button onClick={captureAndDetect} variant="outline" size="lg" disabled={!modelLoaded}>
+              Capture Snapshot
+            </Button>
+            <Button onClick={loadSample} variant="outline" size="lg" disabled={!modelLoaded || isLoading}>
+              Load Sample
             </Button>
             <input
               ref={fileInputRef}
@@ -426,6 +528,19 @@ export function YOLODetector() {
           </CardContent>
         </Card>
       )}
+
+      {/* Raw output */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Detection Output</CardTitle>
+          <CardDescription>Structured results (class, confidence, bbox)</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <pre className="text-xs whitespace-pre-wrap break-all p-3 bg-muted rounded max-h-64 overflow-auto">
+{rawOutput || "No results yet. Try Capture Snapshot or Start Detection."}
+          </pre>
+        </CardContent>
+      </Card>
     </div>
   )
 }
