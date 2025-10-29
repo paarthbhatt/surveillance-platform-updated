@@ -68,7 +68,13 @@ export default function TrackingPage() {
       const data = await response.json()
 
       if (data.success) {
-        setTrackingData(data.events || [])
+        const normalized = (data.events || []).map((event: any) => ({
+          timestamp: event.timestamp,
+          device_id: event.device_id,
+          objects: event?.data?.objects ?? [],
+        })) as TrackingData[]
+
+        setTrackingData(normalized)
       }
     } catch (err) {
       console.error("[v0] Fetch error:", err)
@@ -179,13 +185,13 @@ export default function TrackingPage() {
   // Calculate statistics
   const stats = {
     totalEvents: trackingData.length,
-    totalObjects: trackingData.reduce((sum, event) => sum + event.objects.length, 0),
+    totalObjects: trackingData.reduce((sum, event) => sum + (event.objects?.length ?? 0), 0),
     personCount: trackingData.reduce(
-      (sum, event) => sum + event.objects.filter((obj) => obj.class === "person").length,
+      (sum, event) => sum + (event.objects?.filter((obj) => obj.class === "person").length ?? 0),
       0,
     ),
     vehicleCount: trackingData.reduce(
-      (sum, event) => sum + event.objects.filter((obj) => obj.class === "vehicle").length,
+      (sum, event) => sum + (event.objects?.filter((obj) => obj.class === "vehicle").length ?? 0),
       0,
     ),
   }

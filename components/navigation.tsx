@@ -23,6 +23,7 @@ import {
 const navigation = [
   { name: "Overview", href: "/", icon: LayoutDashboard },
   { name: "Live Dashboard", href: "/dashboard", icon: Activity },
+  { name: "Object Detection", href: "/yolo", icon: Shield },
   { name: "Real-Time Tracking", href: "/tracking", icon: Radar },
   { name: "Interactive Map", href: "/map", icon: Map },
   { name: "Analytics", href: "/analytics", icon: BarChart3 },
