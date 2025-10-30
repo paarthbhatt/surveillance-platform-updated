@@ -381,7 +381,7 @@ export function YOLODetector() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Loading State */}
       {isLoading && (
         <Alert>
@@ -405,16 +405,14 @@ export function YOLODetector() {
           <CardDescription>Real-time object detection using YOLO (COCO-SSD) model</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
+          <div className="w-full max-w-full mx-auto relative aspect-video overflow-hidden rounded-lg bg-black">
             <video
               ref={videoRef}
-              className="absolute inset-0 h-full w-full object-cover pointer-events-none"
-              autoPlay
-              playsInline
-              muted
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+              autoPlay playsInline muted
             />
             <video ref={fileVideoRef} className="hidden" playsInline muted />
-            <canvas ref={canvasRef} className="absolute inset-0 h-full w-full pointer-events-none z-10" width={640} height={480} />
+            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-10" width={640} height={480} />
             {isRunning && (
               <div className="absolute top-2 right-2 rounded bg-red-500 px-2 py-1 text-xs font-bold text-white z-10">
                 LIVE - {fps} FPS
@@ -424,56 +422,18 @@ export function YOLODetector() {
               {statusText}
             </div>
           </div>
-
-          <div className="mt-4 flex gap-2">
-            <Button
-              onClick={startWebcam}
-              disabled={!modelLoaded || isRunning || isLoading}
-              className="flex-1"
-              size="lg"
-            >
-              <Play className="mr-2 h-4 w-4" />
-              Start Detection
-            </Button>
-            <Button
-              onClick={stopWebcam}
-              disabled={!isRunning}
-              variant="destructive"
-              className="flex-1"
-              size="lg"
-            >
-              <Square className="mr-2 h-4 w-4" />
-              Stop
-            </Button>
-            <Button
-              onClick={() => fileInputRef.current?.click()}
-              variant="outline"
-              className="flex-1"
-              size="lg"
-              disabled={!modelLoaded || isLoading}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload CCTV
-            </Button>
-            <Button onClick={captureAndDetect} variant="outline" size="lg" disabled={!modelLoaded}>
-              Capture Snapshot
-            </Button>
-            <Button onClick={loadSample} variant="outline" size="lg" disabled={!modelLoaded || isLoading}>
-              Load Sample
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,video/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
+          <div className="mt-4 flex flex-wrap gap-2 sm:gap-3">
+            <Button onClick={startWebcam} disabled={!modelLoaded || isRunning || isLoading} className="flex-1 min-w-[120px]" size="lg"><Play className="mr-2 h-4 w-4" />Start Detection</Button>
+            <Button onClick={stopWebcam} disabled={!isRunning} variant="destructive" className="flex-1 min-w-[120px]" size="lg"><Square className="mr-2 h-4 w-4" />Stop</Button>
+            <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="flex-1 min-w-[120px]" size="lg" disabled={!modelLoaded || isLoading}><Upload className="mr-2 h-4 w-4" />Upload CCTV</Button>
+            <Button onClick={captureAndDetect} variant="outline" size="lg" className="flex-1 min-w-[120px]" disabled={!modelLoaded}>Capture Snapshot</Button>
+            <Button onClick={loadSample} variant="outline" size="lg" className="flex-1 min-w-[120px]" disabled={!modelLoaded || isLoading}>Load Sample</Button>
+            <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={handleFileUpload} className="hidden" />
           </div>
         </CardContent>
       </Card>
-
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Total Objects</CardTitle>
@@ -505,7 +465,6 @@ export function YOLODetector() {
           </CardContent>
         </Card>
       </div>
-
       {/* Detections List */}
       {detections.length > 0 && (
         <Card>
@@ -514,7 +473,7 @@ export function YOLODetector() {
             <CardDescription>List of detected objects with confidence scores</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               {detections.map((det, idx) => (
                 <div key={idx} className="rounded border p-3 text-sm hover:bg-accent transition">
                   <div className="font-semibold text-foreground">{det.class}</div>
@@ -536,9 +495,7 @@ export function YOLODetector() {
           <CardDescription>Structured results (class, confidence, bbox)</CardDescription>
         </CardHeader>
         <CardContent>
-          <pre className="text-xs whitespace-pre-wrap break-all p-3 bg-muted rounded max-h-64 overflow-auto">
-{rawOutput || "No results yet. Try Capture Snapshot or Start Detection."}
-          </pre>
+          <pre className="text-xs whitespace-pre-wrap break-all p-3 bg-muted rounded max-h-64 overflow-auto">{rawOutput || "No results yet. Try Capture Snapshot or Start Detection."}</pre>
         </CardContent>
       </Card>
     </div>
