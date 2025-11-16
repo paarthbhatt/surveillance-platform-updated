@@ -24,6 +24,8 @@ import {
   Cell,
   ScatterChart,
   Scatter,
+  ReferenceLine,
+  Legend,
 } from "recharts"
 import {
   BarChart3,
@@ -80,6 +82,37 @@ const correlationData = Array.from({ length: 50 }, (_, i) => ({
   batteryLevel: 20 + Math.random() * 80,
 }))
 
+// Calculate linear regression for trend line
+const calculateTrendLine = (data: typeof correlationData) => {
+  const n = data.length
+  const sumX = data.reduce((sum, d) => sum + d.temperature, 0)
+  const sumY = data.reduce((sum, d) => sum + d.motionEvents, 0)
+  const sumXY = data.reduce((sum, d) => sum + d.temperature * d.motionEvents, 0)
+  const sumX2 = data.reduce((sum, d) => sum + d.temperature * d.temperature, 0)
+  
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+  const intercept = (sumY - slope * sumX) / n
+  
+  const minTemp = Math.min(...data.map(d => d.temperature))
+  const maxTemp = Math.max(...data.map(d => d.temperature))
+  
+  return {
+    slope,
+    intercept,
+    minX: minTemp,
+    maxX: maxTemp,
+    minY: slope * minTemp + intercept,
+    maxY: slope * maxTemp + intercept,
+  }
+}
+
+// Get color based on battery level
+const getBatteryColor = (batteryLevel: number) => {
+  if (batteryLevel >= 70) return "#10b981" // green
+  if (batteryLevel >= 40) return "#f59e0b" // yellow
+  return "#ef4444" // red
+}
+
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d")
   const [selectedMetric, setSelectedMetric] = useState("energy")
@@ -87,6 +120,14 @@ export default function AnalyticsPage() {
     from: new Date(),
     to: addDays(new Date(), 30),
   })
+
+  // Add color to correlation data based on battery level
+  const correlationDataWithColors = correlationData.map((item) => ({
+    ...item,
+    color: getBatteryColor(item.batteryLevel),
+  }))
+
+  const trendLine = calculateTrendLine(correlationData)
 
   const downloadFile = (filename: string, content: string, type = "text/plain") => {
     const blob = new Blob([content], { type })
@@ -261,10 +302,42 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={energyTrends}>
+                      <AreaChart data={energyTrends} margin={{ top: 10, right: 30, bottom: 60, left: 100 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <XAxis 
+                          dataKey="date" 
+                          stroke="#d1d5db"
+                          strokeWidth={2}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                          label={{ 
+                            value: 'Date', 
+                            position: 'bottom', 
+                            offset: 15,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                        />
+                        <YAxis 
+                          stroke="#d1d5db" 
+                          strokeWidth={2}
+                          label={{ 
+                            value: 'Energy (kW) / Battery (%)', 
+                            angle: -90, 
+                            position: 'left',
+                            offset: 25,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                        />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: "hsl(var(--card))",
@@ -281,7 +354,7 @@ export default function AnalyticsPage() {
                           fill="var(--chart-4)"
                           fillOpacity={0.6}
                           strokeWidth={3}
-                          name="Solar Generation"
+                          name="Solar Generation (kW)"
                         />
                         <Area
                           type="monotone"
@@ -291,7 +364,7 @@ export default function AnalyticsPage() {
                           fill="var(--chart-1)"
                           fillOpacity={0.6}
                           strokeWidth={3}
-                          name="Battery Level"
+                          name="Battery Level (%)"
                         />
                         <Area
                           type="monotone"
@@ -301,7 +374,7 @@ export default function AnalyticsPage() {
                           fill="var(--chart-3)"
                           fillOpacity={0.6}
                           strokeWidth={3}
-                          name="Consumption"
+                          name="Consumption (kW)"
                         />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -321,10 +394,42 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={motionPatterns}>
+                      <BarChart data={motionPatterns} margin={{ top: 10, right: 30, bottom: 60, left: 90 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <XAxis 
+                          dataKey="hour" 
+                          stroke="#d1d5db"
+                          strokeWidth={2}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                          label={{ 
+                            value: 'Hour of Day', 
+                            position: 'bottom', 
+                            offset: 15,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                        />
+                        <YAxis 
+                          stroke="#d1d5db" 
+                          strokeWidth={2}
+                          label={{ 
+                            value: 'Events', 
+                            angle: -90, 
+                            position: 'left',
+                            offset: 20,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                        />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: "hsl(var(--card))",
@@ -333,9 +438,9 @@ export default function AnalyticsPage() {
                             color: "hsl(var(--card-foreground))",
                           }}
                         />
-                        <Bar dataKey="weekday" fill="var(--chart-2)" name="Weekdays" strokeWidth={2} />
-                        <Bar dataKey="weekend" fill="var(--chart-1)" name="Weekends" strokeWidth={2} />
-                        <Bar dataKey="alerts" fill="var(--chart-5)" name="Alerts" strokeWidth={2} />
+                        <Bar dataKey="weekday" fill="var(--chart-2)" name="Weekdays (Events)" strokeWidth={2} />
+                        <Bar dataKey="weekend" fill="var(--chart-1)" name="Weekends (Events)" strokeWidth={2} />
+                        <Bar dataKey="alerts" fill="var(--chart-5)" name="Alerts (Count)" strokeWidth={2} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -357,10 +462,42 @@ export default function AnalyticsPage() {
                 <CardContent>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={temperatureHistory.slice(-48)}>
+                      <LineChart data={temperatureHistory.slice(-48)} margin={{ top: 10, right: 30, bottom: 60, left: 110 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                        <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" />
-                        <YAxis stroke="hsl(var(--muted-foreground))" />
+                        <XAxis 
+                          dataKey="time" 
+                          stroke="#d1d5db"
+                          strokeWidth={2}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                          label={{ 
+                            value: 'Time', 
+                            position: 'bottom', 
+                            offset: 15,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                        />
+                        <YAxis 
+                          stroke="#d1d5db" 
+                          strokeWidth={2}
+                          label={{ 
+                            value: 'Temperature (°C) / Humidity (%)', 
+                            angle: -90, 
+                            position: 'left',
+                            offset: 30,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                        />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: "hsl(var(--card))",
@@ -479,25 +616,57 @@ export default function AnalyticsPage() {
                     <TrendingUp className="h-5 w-5" />
                     Temperature vs Motion Correlation
                   </CardTitle>
-                  <CardDescription>Relationship between environmental factors and activity</CardDescription>
+                  <CardDescription>Relationship between environmental factors and activity (colored by battery level)</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64">
+                  <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                      <ScatterChart data={correlationData}>
+                      <ScatterChart
+                        data={correlationDataWithColors}
+                        margin={{ top: 20, right: 30, bottom: 100, left: 100 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis
                           type="number"
                           dataKey="temperature"
                           name="Temperature"
                           unit="°C"
-                          stroke="hsl(var(--muted-foreground))"
+                          domain={['dataMin - 2', 'dataMax + 2']}
+                          label={{ 
+                            value: 'Temperature (°C)', 
+                            position: 'bottom', 
+                            offset: 35,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                          stroke="#d1d5db"
+                          strokeWidth={2}
                         />
                         <YAxis
                           type="number"
                           dataKey="motionEvents"
                           name="Motion Events"
-                          stroke="hsl(var(--muted-foreground))"
+                          domain={['dataMin - 2', 'dataMax + 2']}
+                          label={{ 
+                            value: 'Motion Events (Count)', 
+                            angle: -90, 
+                            position: 'insideLeft',
+                            offset: 10,
+                            style: { 
+                              textAnchor: 'middle',
+                              fill: '#ffffff',
+                              fontSize: '16px',
+                              fontWeight: 600
+                            }
+                          }}
+                          tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                          stroke="#d1d5db"
+                          strokeWidth={2}
                         />
                         <Tooltip
                           cursor={{ strokeDasharray: "3 3" }}
@@ -507,13 +676,58 @@ export default function AnalyticsPage() {
                             borderRadius: "8px",
                             color: "hsl(var(--card-foreground))",
                           }}
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload
+                              return (
+                                <div className="p-2 space-y-1">
+                                  <div className="font-medium">Temperature: {data.temperature.toFixed(1)}°C</div>
+                                  <div className="font-medium">Motion Events: {data.motionEvents}</div>
+                                  <div className="font-medium">Battery Level: {data.batteryLevel.toFixed(1)}%</div>
+                                </div>
+                              )
+                            }
+                            return null
+                          }}
+                        />
+                        <ReferenceLine
+                          segment={[
+                            { x: trendLine.minX, y: trendLine.minY },
+                            { x: trendLine.maxX, y: trendLine.maxY },
+                          ]}
+                          stroke="#3b82f6"
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          ifOverflow="extendDomain"
                         />
                         <Scatter
                           dataKey="motionEvents"
-                          fill="var(--chart-2)"
-                          stroke="var(--chart-2)"
-                          strokeWidth={2}
-                          r={6}
+                          fill="#8884d8"
+                          stroke="#8884d8"
+                          strokeWidth={1.5}
+                          r={7}
+                          shape={(props: any) => {
+                            const { cx, cy, payload } = props
+                            return (
+                              <circle
+                                cx={cx}
+                                cy={cy}
+                                r={7}
+                                fill={payload.color}
+                                stroke={payload.color}
+                                strokeWidth={1.5}
+                              />
+                            )
+                          }}
+                        />
+                        <Legend
+                          wrapperStyle={{ paddingTop: '20px' }}
+                          payload={[
+                            { value: 'High Battery (≥70%)', type: 'circle', color: '#10b981' },
+                            { value: 'Medium Battery (40-69%)', type: 'circle', color: '#f59e0b' },
+                            { value: 'Low Battery (<40%)', type: 'circle', color: '#ef4444' },
+                            { value: 'Trend Line', type: 'line', color: '#3b82f6' },
+                          ]}
                         />
                       </ScatterChart>
                     </ResponsiveContainer>
@@ -524,6 +738,7 @@ export default function AnalyticsPage() {
                       <li>• Moderate positive correlation (r = 0.34)</li>
                       <li>• Higher temperatures correlate with increased activity</li>
                       <li>• Peak activity occurs at 22-26°C range</li>
+                      <li>• Battery levels shown by point color (green: high, yellow: medium, red: low)</li>
                     </ul>
                   </div>
                 </CardContent>
