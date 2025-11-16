@@ -46,6 +46,14 @@ const energyData = Array.from({ length: 12 }, (_, i) => ({
   consumption: 10 + Math.random() * 15,
 }))
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 export default function DashboardPage() {
   const [sensorData, setSensorData] = useState(generateSensorData())
   const [isLive, setIsLive] = useState(true)
@@ -91,7 +99,7 @@ export default function DashboardPage() {
                   <Thermometer className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{sensorData.temperature.toFixed(1)}°C</div>
+                  <div className="text-2xl font-bold text-foreground">{formatNumber(sensorData.temperature)}°C</div>
                   <Progress value={sensorData.temperature * 3} className="mt-2" />
                   <p className="text-xs text-muted-foreground mt-1">DHT11 Sensor - {sensorData.timestamp}</p>
                 </CardContent>
@@ -103,7 +111,7 @@ export default function DashboardPage() {
                   <Droplets className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{sensorData.humidity.toFixed(1)}%</div>
+                  <div className="text-2xl font-bold text-foreground">{formatNumber(sensorData.humidity)}%</div>
                   <Progress value={sensorData.humidity} className="mt-2" />
                   <p className="text-xs text-muted-foreground mt-1">DHT11 Sensor - {sensorData.timestamp}</p>
                 </CardContent>
@@ -119,7 +127,7 @@ export default function DashboardPage() {
                   )}
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{sensorData.light.toFixed(0)}%</div>
+                  <div className="text-2xl font-bold text-foreground">{formatNumber(sensorData.light)}%</div>
                   <Progress value={sensorData.light} className="mt-2" />
                   <p className="text-xs text-muted-foreground mt-1">LDR Sensor - {sensorData.timestamp}</p>
                 </CardContent>
@@ -160,7 +168,7 @@ export default function DashboardPage() {
                         <Battery className="h-4 w-4 text-green-400" />
                         <span className="text-sm">Battery Level</span>
                       </div>
-                      <span className="text-sm font-medium">{sensorData.battery.toFixed(0)}%</span>
+                      <span className="text-sm font-medium">{formatNumber(sensorData.battery)}%</span>
                     </div>
                     <Progress value={sensorData.battery} className="h-2" />
 
@@ -169,7 +177,7 @@ export default function DashboardPage() {
                         <Sun className="h-4 w-4 text-yellow-400" />
                         <span className="text-sm">Solar Generation</span>
                       </div>
-                      <span className="text-sm font-medium">{sensorData.solar.toFixed(1)}W</span>
+                      <span className="text-sm font-medium">{formatNumber(sensorData.solar)}W</span>
                     </div>
                     <Progress value={sensorData.solar * 2} className="h-2" />
                   </div>
@@ -187,6 +195,7 @@ export default function DashboardPage() {
                             borderRadius: "8px",
                             color: "hsl(var(--card-foreground))",
                           }}
+                          formatter={(value: number) => formatNumber(value)}
                         />
                         <Area
                           type="monotone"
@@ -236,6 +245,7 @@ export default function DashboardPage() {
                             borderRadius: "8px",
                             color: "hsl(var(--card-foreground))",
                           }}
+                          formatter={(value: number) => formatNumber(value)}
                         />
                         <Bar
                           dataKey="events"
@@ -288,7 +298,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-2">
                           <Battery className="h-3 w-3" />
                           <Progress value={60 + Math.random() * 40} className="h-1 flex-1" />
-                          <span className="text-xs">{(60 + Math.random() * 40).toFixed(0)}%</span>
+                          <span className="text-xs">{formatNumber(60 + Math.random() * 40)}%</span>
                         </div>
                         {hasAlert && (
                           <Badge variant="destructive" className="text-xs">

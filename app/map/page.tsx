@@ -27,6 +27,14 @@ import {
   Power,
 } from "lucide-react"
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 // Mock surveillance units data
 const surveillanceUnits = [
   {
@@ -300,7 +308,7 @@ export default function MapPage() {
                             <Zap
                               className={`h-4 w-4 ${selectedUnitData.battery > 50 ? "text-green-400" : selectedUnitData.battery > 20 ? "text-yellow-400" : "text-red-400"}`}
                             />
-                            <span className="text-sm font-medium">{selectedUnitData.battery}%</span>
+                            <span className="text-sm font-medium">{formatNumber(selectedUnitData.battery)}%</span>
                           </div>
                         </div>
 

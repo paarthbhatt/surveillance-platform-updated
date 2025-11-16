@@ -113,6 +113,14 @@ const getBatteryColor = (batteryLevel: number) => {
   return "#ef4444" // red
 }
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30d")
   const [selectedMetric, setSelectedMetric] = useState("energy")
@@ -228,7 +236,7 @@ export default function AnalyticsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Avg Energy Generation</p>
-                      <p className="text-2xl font-bold text-foreground">24.7W</p>
+                      <p className="text-2xl font-bold text-foreground">24.70W</p>
                       <div className="flex items-center gap-1 mt-1">
                         <TrendingUp className="h-3 w-3 text-green-400" />
                         <span className="text-xs text-green-400">+12.3%</span>
@@ -260,10 +268,10 @@ export default function AnalyticsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Avg Temperature</p>
-                      <p className="text-2xl font-bold text-foreground">23.4°C</p>
+                      <p className="text-2xl font-bold text-foreground">23.40°C</p>
                       <div className="flex items-center gap-1 mt-1">
                         <TrendingUp className="h-3 w-3 text-green-400" />
-                        <span className="text-xs text-green-400">+2.1°C</span>
+                        <span className="text-xs text-green-400">+2.10°C</span>
                       </div>
                     </div>
                     <Thermometer className="h-8 w-8 text-orange-400" />
@@ -300,8 +308,8 @@ export default function AnalyticsPage() {
                   <CardDescription>Solar generation, battery levels, and consumption patterns</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-80 min-h-0">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={320}>
                       <AreaChart data={energyTrends} margin={{ top: 10, right: 30, bottom: 60, left: 100 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
@@ -345,6 +353,7 @@ export default function AnalyticsPage() {
                             borderRadius: "8px",
                             color: "hsl(var(--card-foreground))",
                           }}
+                          formatter={(value: number) => formatNumber(value)}
                         />
                         <Area
                           type="monotone"
@@ -392,8 +401,8 @@ export default function AnalyticsPage() {
                   <CardDescription>Hourly motion events comparison: weekdays vs weekends</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-80 min-h-0">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={320}>
                       <BarChart data={motionPatterns} margin={{ top: 10, right: 30, bottom: 60, left: 90 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
@@ -437,6 +446,7 @@ export default function AnalyticsPage() {
                             borderRadius: "8px",
                             color: "hsl(var(--card-foreground))",
                           }}
+                          formatter={(value: number) => formatNumber(value)}
                         />
                         <Bar dataKey="weekday" fill="var(--chart-2)" name="Weekdays (Events)" strokeWidth={2} />
                         <Bar dataKey="weekend" fill="var(--chart-1)" name="Weekends (Events)" strokeWidth={2} />
@@ -460,8 +470,8 @@ export default function AnalyticsPage() {
                   <CardDescription>Temperature and humidity trends over the past week</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-64 min-h-0">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={256}>
                       <LineChart data={temperatureHistory.slice(-48)} margin={{ top: 10, right: 30, bottom: 60, left: 110 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
@@ -497,6 +507,7 @@ export default function AnalyticsPage() {
                             }
                           }}
                           tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                          tickFormatter={(value) => formatNumber(value)}
                         />
                         <Tooltip
                           contentStyle={{
@@ -505,6 +516,7 @@ export default function AnalyticsPage() {
                             borderRadius: "8px",
                             color: "hsl(var(--card-foreground))",
                           }}
+                          formatter={(value: number) => formatNumber(value)}
                         />
                         <Line
                           type="monotone"
@@ -538,8 +550,8 @@ export default function AnalyticsPage() {
                   <CardDescription>Types of alerts in the last 30 days</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-48 min-h-0">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={192}>
                       <PieChart>
                         <Pie
                           data={alertDistribution}
@@ -619,11 +631,11 @@ export default function AnalyticsPage() {
                   <CardDescription>Relationship between environmental factors and activity (colored by battery level)</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-80 min-h-0">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={320}>
                       <ScatterChart
                         data={correlationDataWithColors}
-                        margin={{ top: 20, right: 30, bottom: 100, left: 100 }}
+                        margin={{ top: 20, right: 30, bottom: 120, left: 120 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis
@@ -635,7 +647,7 @@ export default function AnalyticsPage() {
                           label={{ 
                             value: 'Temperature (°C)', 
                             position: 'bottom', 
-                            offset: 35,
+                            offset: 50,
                             style: { 
                               textAnchor: 'middle',
                               fill: '#ffffff',
@@ -644,6 +656,7 @@ export default function AnalyticsPage() {
                             }
                           }}
                           tick={{ fill: '#ffffff', fontSize: 13, fontWeight: 500 }}
+                          tickFormatter={(value) => formatNumber(value)}
                           stroke="#d1d5db"
                           strokeWidth={2}
                         />
@@ -655,8 +668,8 @@ export default function AnalyticsPage() {
                           label={{ 
                             value: 'Motion Events (Count)', 
                             angle: -90, 
-                            position: 'insideLeft',
-                            offset: 10,
+                            position: 'left',
+                            offset: 30,
                             style: { 
                               textAnchor: 'middle',
                               fill: '#ffffff',
@@ -681,9 +694,9 @@ export default function AnalyticsPage() {
                               const data = payload[0].payload
                               return (
                                 <div className="p-2 space-y-1">
-                                  <div className="font-medium">Temperature: {data.temperature.toFixed(1)}°C</div>
+                                  <div className="font-medium">Temperature: {formatNumber(data.temperature)}°C</div>
                                   <div className="font-medium">Motion Events: {data.motionEvents}</div>
-                                  <div className="font-medium">Battery Level: {data.batteryLevel.toFixed(1)}%</div>
+                                  <div className="font-medium">Battery Level: {formatNumber(data.batteryLevel)}%</div>
                                 </div>
                               )
                             }

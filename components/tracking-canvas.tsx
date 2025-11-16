@@ -16,6 +16,14 @@ interface TrackingCanvasProps {
   height?: number
 }
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 export function TrackingCanvas({ objects, width = 1920, height = 1080 }: TrackingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -65,7 +73,7 @@ export function TrackingCanvas({ objects, width = 1920, height = 1080 }: Trackin
       // Draw label
       ctx.fillStyle = color
       ctx.font = "12px monospace"
-      ctx.fillText(`${obj.class} (${(obj.confidence * 100).toFixed(0)}%)`, x, y - 5)
+      ctx.fillText(`${obj.class} (${formatNumber(obj.confidence * 100)}%)`, x, y - 5)
 
       // Draw centroid
       ctx.fillStyle = "#00ff88"

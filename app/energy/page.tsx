@@ -46,11 +46,19 @@ const batteryLevels = [
   { unit: "Unit-06", level: 68, status: "fair" },
 ]
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 export default function EnergyPage() {
-  const totalGeneration = 156.8
-  const totalConsumption = 142.3
-  const efficiency = 89.2
-  const carbonSaved = 2.4
+  const totalGeneration = 156.80
+  const totalConsumption = 142.30
+  const efficiency = 89.20
+  const carbonSaved = 2.40
 
   const getBatteryColor = (level: number) => {
     if (level >= 80) return "text-success"
@@ -95,7 +103,7 @@ export default function EnergyPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Solar Generation</p>
-                      <p className="text-2xl font-bold text-foreground">{totalGeneration} kWh</p>
+                      <p className="text-2xl font-bold text-foreground">{formatNumber(totalGeneration)} kWh</p>
                       <div className="flex items-center gap-1 mt-1">
                         <TrendingUp className="h-3 w-3 text-success" />
                         <span className="text-xs text-success">+12% today</span>
@@ -111,7 +119,7 @@ export default function EnergyPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Power Consumption</p>
-                      <p className="text-2xl font-bold text-foreground">{totalConsumption} kWh</p>
+                      <p className="text-2xl font-bold text-foreground">{formatNumber(totalConsumption)} kWh</p>
                       <div className="flex items-center gap-1 mt-1">
                         <TrendingDown className="h-3 w-3 text-success" />
                         <span className="text-xs text-success">-5% today</span>
@@ -127,7 +135,7 @@ export default function EnergyPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">System Efficiency</p>
-                      <p className="text-2xl font-bold text-foreground">{efficiency}%</p>
+                      <p className="text-2xl font-bold text-foreground">{formatNumber(efficiency)}%</p>
                       <div className="flex items-center gap-1 mt-1">
                         <TrendingUp className="h-3 w-3 text-success" />
                         <span className="text-xs text-success">Optimal</span>
@@ -143,7 +151,7 @@ export default function EnergyPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Carbon Saved</p>
-                      <p className="text-2xl font-bold text-foreground">{carbonSaved} kg</p>
+                      <p className="text-2xl font-bold text-foreground">{formatNumber(carbonSaved)} kg</p>
                       <div className="flex items-center gap-1 mt-1">
                         <Leaf className="h-3 w-3 text-success" />
                         <span className="text-xs text-success">Today</span>
@@ -178,6 +186,7 @@ export default function EnergyPage() {
                           border: "1px solid hsl(var(--border))",
                           borderRadius: "6px",
                         }}
+                        formatter={(value: number) => formatNumber(value)}
                       />
                       <Area
                         type="monotone"
@@ -274,7 +283,7 @@ export default function EnergyPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Battery Level</span>
                           <span className={`text-sm font-medium ${getBatteryColor(battery.level)}`}>
-                            {battery.level}%
+                            {formatNumber(battery.level)}%
                           </span>
                         </div>
                         <Progress value={battery.level} className="h-2" />

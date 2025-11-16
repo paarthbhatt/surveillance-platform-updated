@@ -14,6 +14,14 @@ interface Detection {
   centroid: [number, number]
 }
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 export function YOLODetector() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const fileVideoRef = useRef<HTMLVideoElement>(null)
@@ -199,7 +207,7 @@ export function YOLODetector() {
         lastDetectionsRef.current = detected
         setDetections(detected)
         setRawOutput(JSON.stringify(
-          detected.map(d => ({ class: d.class, score: Number((d.score*100).toFixed(1)), bbox: d.bbox })),
+          detected.map(d => ({ class: d.class, score: Number(formatNumber(d.score*100)), bbox: d.bbox })),
           null,
           2,
         ))
@@ -236,7 +244,7 @@ export function YOLODetector() {
       setDetections(detected)
       drawDetectionsOnCanvas(canvasRef.current, detected, ctx)
       setRawOutput(JSON.stringify(
-        detected.map(d => ({ class: d.class, score: Number((d.score*100).toFixed(1)), bbox: d.bbox })),
+        detected.map(d => ({ class: d.class, score: Number(formatNumber(d.score*100)), bbox: d.bbox })),
         null,
         2,
       ))
@@ -255,7 +263,7 @@ export function YOLODetector() {
     // Draw detections on top of existing canvas content
     detections.forEach((detection) => {
       const [x, y, width, height] = detection.bbox
-      const confidence = (detection.score * 100).toFixed(1)
+      const confidence = formatNumber(detection.score * 100)
 
       // Draw bounding box
       context.strokeStyle = "#00ff00"
@@ -477,7 +485,7 @@ export function YOLODetector() {
               {detections.map((det, idx) => (
                 <div key={idx} className="rounded border p-3 text-sm hover:bg-accent transition">
                   <div className="font-semibold text-foreground">{det.class}</div>
-                  <div className="text-muted-foreground">Confidence: {(det.score * 100).toFixed(1)}%</div>
+                  <div className="text-muted-foreground">Confidence: {formatNumber(det.score * 100)}%</div>
                   <div className="text-xs text-muted-foreground mt-1">
                     Position: ({Math.round(det.centroid[0])}, {Math.round(det.centroid[1])})
                   </div>

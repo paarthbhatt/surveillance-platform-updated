@@ -18,6 +18,14 @@ interface TrackingAnalytics {
   objectDistribution: Array<{ name: string; value: number }>
 }
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 export default function TrackingAnalyticsPage() {
   const [analytics, setAnalytics] = useState<TrackingAnalytics | null>(null)
   const [loading, setLoading] = useState(true)
@@ -119,7 +127,7 @@ export default function TrackingAnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-orange-400">
-                    {(analytics.averageConfidence * 100).toFixed(1)}%
+                    {formatNumber(analytics.averageConfidence * 100)}%
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Detection accuracy</p>
                 </CardContent>
@@ -216,7 +224,7 @@ export default function TrackingAnalyticsPage() {
                     <p className="text-sm text-muted-foreground mb-2">Persons Detected</p>
                     <p className="text-3xl font-bold text-orange-400">{analytics.personCount}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      {((analytics.personCount / analytics.totalObjects) * 100).toFixed(1)}% of total
+                      {formatNumber((analytics.personCount / analytics.totalObjects) * 100)}% of total
                     </p>
                   </div>
 
@@ -224,14 +232,14 @@ export default function TrackingAnalyticsPage() {
                     <p className="text-sm text-muted-foreground mb-2">Vehicles Detected</p>
                     <p className="text-3xl font-bold text-pink-400">{analytics.vehicleCount}</p>
                     <p className="text-xs text-muted-foreground mt-2">
-                      {((analytics.vehicleCount / analytics.totalObjects) * 100).toFixed(1)}% of total
+                      {formatNumber((analytics.vehicleCount / analytics.totalObjects) * 100)}% of total
                     </p>
                   </div>
 
                   <div className="p-4 bg-slate-800 rounded border border-slate-700">
                     <p className="text-sm text-muted-foreground mb-2">Avg Objects/Event</p>
                     <p className="text-3xl font-bold text-cyan-400">
-                      {(analytics.totalObjects / analytics.totalEvents).toFixed(1)}
+                      {formatNumber(analytics.totalObjects / analytics.totalEvents)}
                     </p>
                     <p className="text-xs text-muted-foreground mt-2">Objects per detection frame</p>
                   </div>

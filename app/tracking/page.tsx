@@ -23,6 +23,14 @@ interface TrackingData {
   objects: DetectedObject[]
 }
 
+// Format number: 2 decimal places for decimals, keep integers as-is
+const formatNumber = (value: number): string => {
+  if (Number.isInteger(value)) {
+    return value.toString()
+  }
+  return value.toFixed(2)
+}
+
 export default function TrackingPage() {
   const [trackingData, setTrackingData] = useState<TrackingData[]>([])
   const [isSimulating, setIsSimulating] = useState(false)
@@ -361,7 +369,7 @@ export default function TrackingPage() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-medium text-cyan-400">{(obj.confidence * 100).toFixed(1)}%</p>
+                            <p className="text-sm font-medium text-cyan-400">{formatNumber(obj.confidence * 100)}%</p>
                             <p className="text-xs text-muted-foreground">confidence</p>
                           </div>
                         </div>
